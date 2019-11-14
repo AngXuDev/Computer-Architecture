@@ -134,15 +134,22 @@ class CPU:
 
             if instruction == PUSH:
                 self.reg[self.SP] -= 1
-                operand_a = self.ram_read(self.pc+1)
+                reg_num = self.ram_read(self.pc+1)
+                reg_val = self.reg[reg_num]
+                self.ram_write(self.reg[self.SP], reg_val)
 
-                self.ram_write(self.reg[self.SP], self.reg[operand_a])
+                # operand_a = self.ram_read(self.pc+1)
+
+                # self.ram_write(self.reg[self.SP], self.reg[operand_a])
 
                 self.pc += 2
 
             elif instruction == POP:
-                self.reg[operand_a] = self.ram_read(self.reg[self.SP])
-                operand_a = self.ram_read(self.pc+1)
+                val = self.ram_read(self.reg[self.SP])
+                reg_num = self.ram_read(self.pc + 1)
+                self.reg[reg_num] = val
+                # self.reg[operand_a] = self.ram_read(self.reg[self.SP])
+                # operand_a = self.ram_read(self.pc+1)
 
                 self.reg[self.SP] += 1
 
