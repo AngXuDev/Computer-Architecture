@@ -7,6 +7,8 @@ LDI = 0b10000010
 PRN = 0b01000111
 MUL = 0b10100010
 ADD = 0b10100000
+PUSH = 0b01000101
+POP = 0b01000110
 
 
 class CPU:
@@ -17,6 +19,9 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.SP = 7
+        self.reg[self.SP] = 0xf4
+
 
     def load(self):
         """Load a program into memory."""
@@ -33,18 +38,51 @@ class CPU:
             # 0b01000111,  # PRN R0
             # 0b00000000,
             # 0b00000001,  # HLT
-            0b10000010, # LDI R0,8
+
+            # 0b10000010, # LDI R0,8
+            # 0b00000000,
+            # 0b00001000,
+            # 0b10000010, # LDI R1,9
+            # 0b00000001,
+            # 0b00001001,
+            # 0b10100010, # MUL R0,R1
+            # 0b00000000,
+            # 0b00000001,
+            # 0b01000111, # PRN R0
+            # 0b00000000,
+            # 0b00000001, # HLT
+
+            0b10000010, # LDI R0,1
             0b00000000,
-            0b00001000,
-            0b10000010, # LDI R1,9
             0b00000001,
-            0b00001001,
-            0b10100010, # MUL R0,R1
+            0b10000010, # LDI R1,2
+            0b00000001,
+            0b00000010,
+            0b01000101, # PUSH R0
             0b00000000,
+            0b01000101, # PUSH R1
             0b00000001,
+            0b10000010, # LDI R0,3
+            0b00000000,
+            0b00000011,
+            0b01000110, # POP R0
+            0b00000000,
             0b01000111, # PRN R0
             0b00000000,
-            0b00000001, # HLT
+            0b10000010, # LDI R0,4
+            0b00000000,
+            0b00000100,
+            0b01000101, # PUSH R0
+            0b00000000,
+            0b01000110, # POP R2
+            0b00000010,
+            0b01000110, # POP R1
+            0b00000001,
+            0b01000111, # PRN R2
+            0b00000010,
+            0b01000111, # PRN R1
+            0b00000001,
+            0b00000001 # HLT
         ]
 
         for instruction in program:
@@ -94,7 +132,23 @@ class CPU:
         while not halted:
             instruction = self.ram_read(self.pc)
 
-            if instruction == LDI:
+            if instruction == PUSH:
+                self.reg[self.SP] -= 1
+                operand_a = self.ram_read(self.pc+1)
+
+                self.ram_write(self.reg[self.SP], self.reg[operand_a])
+
+                self.pc += 2
+
+            elif instruction == POP:
+                self.reg[operand_a] = self.ram_read(self.reg[self.SP])
+                operand_a = self.ram_read(self.pc+1)
+
+                self.reg[self.SP] += 1
+
+                self.pc += 2
+
+            elif instruction == LDI:
                 operand_a = self.ram_read(self.pc+1)
                 operand_b = self.ram_read(self.pc+2)
 
@@ -102,21 +156,15 @@ class CPU:
 
                 self.pc += 3
 
-                self.trace()
-
             elif instruction == PRN:
                 operand_a = self.ram_read(self.pc+1)
                 print(self.reg[operand_a])
 
                 self.pc += 2
 
-                self.trace()
-
             elif instruction == HLT:
                 halted = True
                 self.pc = 0
-
-                self.trace()
             
             elif instruction == MUL:
                 operand_a = self.ram_read(self.pc+1)
